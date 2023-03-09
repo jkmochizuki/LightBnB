@@ -4,6 +4,7 @@ $(() => {
   <form action="/api/properties" method="post" id="new-reservation-form" class="new-reservation-form">
       <div class="reservation-form__field-wrapper">
         <label for="reservation-form__start-date">Start Date</label>
+        <input type="hidden" name="property_id" id ="reservation-form_property-id" value="${localStorage.getItem('property_id')}">
         <input type="date" name="start_date" id="reservation-form__start-date>
       </div>
 

@@ -216,6 +216,7 @@ exports.addProperty = addProperty;
  * @return {Promise<{}>} A promise to the reservation.
  */
 const addReservation = function(reservation) {
+  console.log('reservation', reservation);
   const queryString = `
   INSERT INTO reservations (guest_id, property_id, start_date, end_date)
   VALUES ($1, $2, $3, $4)
