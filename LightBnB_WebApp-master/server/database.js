@@ -196,12 +196,12 @@ const addProperty = function(property) {
   INSERT INTO properties (owner_id, title, description, thumbnail_photo_url, cover_photo_url, cost_per_night, street, city, province, post_code, country, parking_spaces, number_of_bathrooms, number_of_bedrooms)
   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $12, $13, $14)
   RETURNING*;`;
-  const values = [property.owner_id, property.title, property.description, property.thumbnail_photo_url, property.cover_photo_url, property.cost_per_night, property.street, property.city, property.province, property.post_code, property.country, property.parking_spaces, property.number_of_bathrooms, property.number_of_bedrooms];
+  const values = [property.owner_id, property.title, property.description, property.thumbnail_photo_url, property.cover_photo_url, property.cost_per_night * 100, property.street, property.city, property.province, property.post_code, property.country, property.parking_spaces, property.number_of_bathrooms, property.number_of_bedrooms];
 
   return pool
     .query(queryString, values)
     .then((res) => {
-      const property = res.rows[0];
+      const property = res.rows;
       return property;
     })
     .catch((err) => {
@@ -209,3 +209,27 @@ const addProperty = function(property) {
     });
 };
 exports.addProperty = addProperty;
+
+/**
+ * Add a reservation to the database
+ * @param {{}} reservation An object containing all of the property details.
+ * @return {Promise<{}>} A promise to the reservation.
+ */
+const addReservation = function(reservation) {
+  const queryString = `
+  INSERT INTO reservations (guest_id, property_id, start_date, end_date)
+  VALUES ($1, $2, $3, $4)
+  RETURNING*;`;
+  const values = [reservation.guest_id, reservation.property_id, reservation.start_date, reservation.end_date];
+
+  return pool
+    .query(queryString, values)
+    .then((res) => {
+      const reservation = res.rows;
+      return reservation;
+    })
+    .catch((err) => {
+      console.log(err.message);
+    });
+};
+exports.addReservation = addReservation;
