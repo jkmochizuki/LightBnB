@@ -29,7 +29,7 @@ const getUserWithEmail = function(email) {
       const user = result.rows[0];
       const userEmail = user.email;
       if (userEmail.toLowerCase() === email.toLowerCase()) {
-        return Promise.resolve(user);
+        return user;
       } else {
         return null;
       }
@@ -58,7 +58,7 @@ const getUserWithId = function(id) {
       const user = result.rows[0];
       const userId = user.id;
       if (userId === id) {
-        return Promise.resolve(user);
+        return user;
       } else {
         return null;
       }
@@ -86,7 +86,7 @@ const addUser =  function(user) {
     .query(queryString, values)
     .then((result) => {
       const user = result.rows[0];
-      return Promise.resolve(user);
+      return user;
     })
     .catch((err) => {
       console.log(err.message);
@@ -118,7 +118,7 @@ const getAllReservations = function(guest_id, limit = 10) {
   return pool
     .query(queryString, values)
     .then((reservations) => {
-      return Promise.resolve(reservations.rows);
+      return reservations.rows;
     })
     .catch((err) => {
       console.log(err.message);
@@ -135,16 +135,31 @@ exports.getAllReservations = getAllReservations;
  * @return {Promise<[{}]>}  A promise to the properties.
  */
 const getAllProperties = function(options, limit = 10) {
-  const queryString = `
-  SELECT * FROM properties
-  LIMIT $1;`;
-  const values = [limit];
+  const queryParams = [];
+  let queryString = `
+  SELECT properties.*, avg(property_reviews.rating) as average_rating
+  FROM properties
+  JOIN property_reviews ON properties.id = property_id
+  `;
+
+  if (options.city) {
+    queryParams.push(`%${options.city}%`);
+    queryString += `WHERE city LIKE $${queryParams.length} `;
+  }
+
+  queryParams.push(limit);
+  queryString += `
+  GROUP BY properties.id
+  ORDER BY cost_per_night
+  LIMIT $${queryParams.length};
+  `;
+  
+  const values = [`%${options}%`,limit];
+  console.log(queryString, queryParams);
 
   return pool
-    .query(queryString, values)
-    .then((result) => {
-      return result.rows;
-    })
+    .query(queryString, queryParams)
+    .then((res) => res.rows)
     .catch((err) => {
       console.log(err.message);
     });
