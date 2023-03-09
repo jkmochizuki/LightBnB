@@ -25,8 +25,8 @@ const getUserWithEmail = function(email) {
 
   return pool
     .query(queryString, values)
-    .then((result) => {
-      const user = result.rows[0];
+    .then((res) => {
+      const user = res.rows[0];
       const userEmail = user.email;
       if (userEmail.toLowerCase() === email.toLowerCase()) {
         return user;
@@ -54,8 +54,8 @@ const getUserWithId = function(id) {
 
   return pool
     .query(queryString, values)
-    .then((result) => {
-      const user = result.rows[0];
+    .then((res) => {
+      const user = res.rows[0];
       const userId = user.id;
       if (userId === id) {
         return user;
@@ -84,8 +84,8 @@ const addUser =  function(user) {
 
   return pool
     .query(queryString, values)
-    .then((result) => {
-      const user = result.rows[0];
+    .then((res) => {
+      const user = res.rows[0];
       return user;
     })
     .catch((err) => {
@@ -117,8 +117,8 @@ const getAllReservations = function(guest_id, limit = 10) {
 
   return pool
     .query(queryString, values)
-    .then((reservations) => {
-      return reservations.rows;
+    .then((res) => {
+      return res.rows;
     })
     .catch((err) => {
       console.log(err.message);
@@ -136,7 +136,6 @@ exports.getAllReservations = getAllReservations;
  */
 const getAllProperties = function(options, limit = 10) {
   const queryParams = [];
-
   let whereClauses = "";
   let havingClause = "";
 
@@ -145,19 +144,11 @@ const getAllProperties = function(options, limit = 10) {
       if (whereClause.includes('city')) {
         queryParams.push(`%${option}%`);
       } else {
-        if (whereClause.includes('cost')) {
-          queryParams.push(`${option * 100}`);
-        } else {
-          queryParams.push(`${option}`);
-        }
+        whereClause.includes('cost') ? queryParams.push(`${option * 100}`) : queryParams.push(`${option}`);
       }
-      if (!queryParams.length) {
-        whereClauses += `WHERE ${whereClause} $${queryParams.length}`;
-      }
-      whereClauses += ` AND ${whereClause} $${queryParams.length}`;
+      whereClauses += (queryParams.length === 1) ? `WHERE ${whereClause} $${queryParams.length}` : ` AND ${whereClause} $${queryParams.length}`;
     }
   };
-  
   getWhereClause(options.city, 'city LIKE');
   getWhereClause(options.owner_id, 'owner_id =');
   getWhereClause(options.maximum_price_per_night, 'cost_per_night <=');
@@ -169,12 +160,10 @@ const getAllProperties = function(options, limit = 10) {
       havingClause += `HAVING avg(rating) >= $${queryParams.length}`;
     }
   };
-
   getHavingClause(options.minimum_rating);
 
   queryParams.push(limit);
-
-  let queryString = `
+  const queryString = `
   SELECT properties.*, avg(property_reviews.rating) as average_rating
   FROM properties
   JOIN property_reviews ON properties.id = property_id
