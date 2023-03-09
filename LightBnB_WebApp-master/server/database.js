@@ -136,27 +136,57 @@ exports.getAllReservations = getAllReservations;
  */
 const getAllProperties = function(options, limit = 10) {
   const queryParams = [];
+
+  let whereClauses = "";
+  let havingClause = "";
+
+  const getWhereClause = (option, whereClause) => {
+    if (option) {
+      if (whereClause.includes('city')) {
+        queryParams.push(`%${option}%`);
+      } else {
+        if (whereClause.includes('cost')) {
+          queryParams.push(`${option * 100}`);
+        } else {
+          queryParams.push(`${option}`);
+        }
+      }
+      if (!queryParams.length) {
+        whereClauses += `WHERE ${whereClause} $${queryParams.length}`;
+      }
+      whereClauses += ` AND ${whereClause} $${queryParams.length}`;
+    }
+  };
+  
+  getWhereClause(options.city, 'city LIKE');
+  getWhereClause(options.owner_id, 'owner_id =');
+  getWhereClause(options.maximum_price_per_night, 'cost_per_night <=');
+  getWhereClause(options.minimum_price_per_night, 'cost_per_night >=');
+
+  const getHavingClause = option => {
+    if (option) {
+      queryParams.push(`${option}`);
+      havingClause += `HAVING avg(rating) >= $${queryParams.length}`;
+    }
+  };
+
+  getHavingClause(options.minimum_rating);
+
+  queryParams.push(limit);
+
   let queryString = `
   SELECT properties.*, avg(property_reviews.rating) as average_rating
   FROM properties
   JOIN property_reviews ON properties.id = property_id
-  `;
-
-  if (options.city) {
-    queryParams.push(`%${options.city}%`);
-    queryString += `WHERE city LIKE $${queryParams.length} `;
-  }
-
-  queryParams.push(limit);
-  queryString += `
+  ${whereClauses}
   GROUP BY properties.id
+  ${havingClause}
   ORDER BY cost_per_night
-  LIMIT $${queryParams.length};
+  LIMIT $${queryParams.length}
   `;
-  
-  const values = [`%${options}%`,limit];
-  console.log(queryString, queryParams);
 
+  console.log(queryString, queryParams);
+  
   return pool
     .query(queryString, queryParams)
     .then((res) => res.rows)
@@ -164,8 +194,8 @@ const getAllProperties = function(options, limit = 10) {
       console.log(err.message);
     });
 };
-exports.getAllProperties = getAllProperties;
 
+exports.getAllProperties = getAllProperties;
 
 /**
  * Add a property to the database
