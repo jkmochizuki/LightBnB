@@ -4,7 +4,6 @@
 
 ```
 ├── db
-├── erd
 ├── public
 │   ├── index.html
 │   ├── javascript
@@ -31,8 +30,7 @@
   └── server.js
 ```
 
-* `db` contains the database schema and seeds.
-* `erd` contains the er diagram.
+* `db` contains the database erd, schema and seeds.
 * `public` contains all of the HTML, CSS, and client side JavaScript. 
   * `index.html` is the entry point to the application. It's the only html page because this is a single page application.
   * `javascript` contains all of the client side javascript files.
